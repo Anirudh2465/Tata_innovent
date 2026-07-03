@@ -1,0 +1,32 @@
+[project]
+name = "think_fast"
+version = "0.1.0"
+description = "Think Fast: Reflex Architecture for autonomous vehicles."
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "httpx",
+    "numpy",
+    "nuscenes-devkit",
+    "onnx",
+    "onnxruntime-gpu",
+    "opencv-python",
+    "pycuda",
+    "pyquaternion",
+    "pytest",
+    "torch>=2.2.0",
+    "torchvision",
+    "ultralytics>=8.3.0",
+    "uvicorn",
+]
+
+# Ensure uv downloads the correct PyTorch wheels for CUDA 12.4
+# (Compatible with RTX 5070 and CUDA 13.0)
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu124" }
+torchvision = { index = "pytorch-cu124" }

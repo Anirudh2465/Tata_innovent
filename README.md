@@ -20,19 +20,19 @@ or an asynchronous **Semantic Dispatch** to the "Think Slow" VLA model via MCP.
 
 ## Installation & Setup (Windows PowerShell)
 
-It is highly recommended to run this project inside a Python Virtual Environment (`venv`) so that dependencies do not conflict with your global Python installation.
+We use **`uv`** as our lightning-fast package and Python version manager. It ensures your environment is exactly identical to the required setup without conflicting with your system.
 
 Open a PowerShell window in the `think_fast` directory:
 
 ```powershell
-# 1. Create the virtual environment
-python -m venv venv
+# 1. Install uv (if you haven't already)
+irm https://astral.sh/uv/install.ps1 | iex
 
-# 2. Activate the virtual environment
-.\venv\Scripts\activate
+# 2. Sync the environment (uv will automatically download Python and all dependencies!)
+uv sync
 
-# 3. Install the dependencies
-pip install -r requirements.txt
+# 3. Activate the virtual environment
+.\.venv\Scripts\activate
 ```
 
 *(Note: If you plan to compile the TensorRT engine, TensorRT must be installed directly from NVIDIA's developer portal).*
@@ -44,7 +44,7 @@ Ensure the `v1.0-trainval` JSON metadata is present in that root directory.
 
 ## Pipeline Usage (PowerShell)
 
-**Important:** Before running any of the commands below, make sure your virtual environment is active (`.\venv\Scripts\activate`) and you are running these commands from the **parent directory** (`D:\TATA\data 1`) so that Python recognizes `think_fast` as a module.
+**Important:** Before running any of the commands below, make sure your virtual environment is active (`.\.venv\Scripts\activate`) and you are running these commands from the **parent directory** (`D:\TATA\data 1`) so that Python recognizes `think_fast` as a module.
 
 ```powershell
 cd "D:\TATA\data 1"
@@ -83,7 +83,7 @@ Run the orchestrator on a set of nuScenes samples. You can use `--mode dev` (PyT
 **Step A:** Start the MCP Stub Server (VLA simulator) in a separate PowerShell window (remember to activate your venv there too):
 ```powershell
 cd "D:\TATA\data 1"
-.\think_fast\venv\Scripts\activate
+.\think_fast\.venv\Scripts\activate
 python -m think_fast.mcp.mcp_server_stub
 ```
 
