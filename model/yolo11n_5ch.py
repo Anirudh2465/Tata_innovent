@@ -231,7 +231,7 @@ def build_model_with_weight_transfer(
         #   Shape 5ch: (out_ch, 5, kH, kW)
         #   Shape 3ch: (out_ch, 3, kH, kW)
         if param_5ch.shape != param_3ch.shape:
-            if "0.conv.weight" in key:
+            if key == "model.0.conv.weight":
                 logger.info(
                     "Transferring first conv: %s → %s with depth_init='%s'",
                     tuple(param_3ch.shape),
