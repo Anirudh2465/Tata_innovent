@@ -44,7 +44,7 @@ Ensure the `v1.0-trainval` JSON metadata is present in that root directory.
 
 ## Pipeline Usage (PowerShell)
 
-**Important:** Before running any of the commands below, make sure your virtual environment is active (`.\.venv\Scripts\activate`) and you are running these commands from the **parent directory** (`D:\TATA\data 1`) so that Python recognizes `think_fast` as a module.
+**Important:** Before running any of the commands below, make sure your virtual environment is active (`.\think_fast\.venv\Scripts\activate`) and you are running these commands from the **parent directory** (`D:\TATA\data 1`) so that Python recognizes `think_fast` as a module.
 
 ```powershell
 cd "D:\TATA\data 1"
