@@ -374,6 +374,12 @@ class ThinkFastTrainer:
         device:        str   = "cuda",
     ) -> None:
         self.model       = model_5ch
+        
+        # Populate ultralytics model args with default training hyperparameters 
+        # so the loss functions (e.g., v8DetectionLoss) have attributes like hyp.box
+        from ultralytics.cfg import get_cfg
+        self.model.model.args = get_cfg()
+
         self.epochs      = epochs
         self.batch_size  = batch_size
         self.output_dir  = output_dir
@@ -385,7 +391,7 @@ class ThinkFastTrainer:
             dataset_train,
             batch_size  = batch_size,
             shuffle     = True,
-            num_workers = 4,
+            num_workers = 0,
             pin_memory  = True,
             collate_fn  = collate_fn,
         )
@@ -393,7 +399,7 @@ class ThinkFastTrainer:
             dataset_val,
             batch_size  = 1,
             shuffle     = False,
-            num_workers = 2,
+            num_workers = 0,
             pin_memory  = True,
             collate_fn  = collate_fn,
         )
@@ -481,8 +487,19 @@ class ThinkFastTrainer:
 
             self.optimizer.zero_grad()
 
-            # Ultralytics model returns loss when targets are provided
-            loss, _ = self.model.model(flat, label_tensor)
+            # Ultralytics model returns loss when inputs are wrapped in a dict
+            batch_dict = {
+                "img": flat,
+                "batch_idx": label_tensor[:, 0],
+                "cls": label_tensor[:, 1:2],
+                "bboxes": label_tensor[:, 2:]
+            }
+            loss_result = self.model.model(batch_dict)
+            loss = loss_result[0] if isinstance(loss_result, tuple) else loss_result
+            
+            if loss.numel() > 1:
+                loss = loss.sum()
+
             loss.backward()
 
             torch.nn.utils.clip_grad_norm_(
@@ -516,7 +533,24 @@ class ThinkFastTrainer:
                     continue
 
                 label_tensor = torch.tensor(label_list, dtype=torch.float32).to(self.device)
-                loss, _      = self.model.model(flat, label_tensor)
+                batch_dict = {
+                    "img": flat,
+                    "batch_idx": label_tensor[:, 0],
+                    "cls": label_tensor[:, 1:2],
+                    "bboxes": label_tensor[:, 2:]
+                }
+                
+                # In val, we might need to compute loss if we wrap in train mode or we call loss manually.
+                # Actually, during eval(), DetectionModel might not compute loss natively from a dict.
+                # Wait, DetectionModel.forward(batch) calls self.loss if isinstance(batch, dict)
+                # But it depends if we are in eval mode.
+                # Wait, we might need to manually call model.loss() if model is in eval mode!
+                # Let's check how we handle it: 
+                if isinstance(batch_dict, dict):
+                    loss_result = self.model.model.loss(batch_dict)
+                    loss = loss_result[0] if isinstance(loss_result, tuple) else loss_result
+                else:
+                    loss = 0.0
 
                 total_loss += loss.item()
                 n_batches  += 1

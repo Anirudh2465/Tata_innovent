@@ -219,10 +219,23 @@ class NuScenesLoader:
         self.nusc = NuScenes(version=version, dataroot=dataroot, verbose=verbose)
 
         # Collect sample tokens belonging to the requested split
-        self.sample_tokens: List[str] = self._get_split_tokens(split)
+        raw_tokens = self._get_split_tokens(split)
+        
+        # Filter tokens to only include ones we actually have blobs for
+        self.sample_tokens = []
+        logger.info("Filtering %d tokens for locally available blobs...", len(raw_tokens))
+        for token in raw_tokens:
+            sample_rec = self.nusc.get('sample', token)
+            cam_token = sample_rec['data']['CAM_FRONT']
+            cam_data = self.nusc.get('sample_data', cam_token)
+            filepath = os.path.join(self.nusc.dataroot, cam_data['filename'])
+            if os.path.exists(filepath):
+                self.sample_tokens.append(token)
+                
         logger.info(
-            "NuScenesLoader ready: %d samples in split '%s'",
+            "NuScenesLoader ready: %d / %d samples available in split '%s'",
             len(self.sample_tokens),
+            len(raw_tokens),
             split,
         )
 
