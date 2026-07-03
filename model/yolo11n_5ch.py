@@ -208,6 +208,19 @@ def build_model_with_weight_transfer(
     logger.info("Initialising 5-channel model from YAML …")
     model_5ch = YOLO(yaml_path)
 
+    # Ultralytics hardcodes ch=3 when parsing YAML. We must manually swap the first conv.
+    import torch.nn as nn
+    old_conv = model_5ch.model.model[0].conv
+    model_5ch.model.model[0].conv = nn.Conv2d(
+        in_channels=5,
+        out_channels=old_conv.out_channels,
+        kernel_size=old_conv.kernel_size,
+        stride=old_conv.stride,
+        padding=old_conv.padding,
+        groups=old_conv.groups,
+        bias=(old_conv.bias is not None),
+    )
+
     # ── Step 2: Load 3-channel pre-trained model ──────────────────
     logger.info("Loading pre-trained weights from %s …", pretrained_pt)
     model_3ch = YOLO(pretrained_pt)
