@@ -18,80 +18,87 @@ or an asynchronous **Semantic Dispatch** to the "Think Slow" VLA model via MCP.
 - **Threat Matrix**: C++ and Python modules to compute Enhanced Time-to-Collision (ETTC).
 - **MCP Dispatcher**: FastAPI stub and async MCP client for semantic agentic handoff.
 
-## Installation
+## Installation & Setup (Windows PowerShell)
 
-```bash
-# Create a conda environment
-conda create -n thinkfast python=3.10
-conda activate thinkfast
+It is highly recommended to run this project inside a Python Virtual Environment (`venv`) so that dependencies do not conflict with your global Python installation.
 
-# Install dependencies
+Open a PowerShell window in the `think_fast` directory:
+
+```powershell
+# 1. Create the virtual environment
+python -m venv venv
+
+# 2. Activate the virtual environment
+.\venv\Scripts\activate
+
+# 3. Install the dependencies
 pip install -r requirements.txt
-
-# Install TensorRT (hardware specific - refer to NVIDIA docs)
 ```
+
+*(Note: If you plan to compile the TensorRT engine, TensorRT must be installed directly from NVIDIA's developer portal).*
 
 ## Data Preparation
 
-Extract the nuScenes dataset (`v1.0-trainval03_blobs.tgz` and others) to a directory (e.g., `/data/nuscenes`).
-Ensure the `v1.0-trainval` JSON metadata is present.
+Extract the nuScenes dataset (`v1.0-trainval03_blobs.tgz` and others) to a directory (e.g., `D:\TATA\data 1\v1.0-trainval03_blobs`).
+Ensure the `v1.0-trainval` JSON metadata is present in that root directory.
 
-## Pipeline Usage
+## Pipeline Usage (PowerShell)
 
-### 1. Training
+**Important:** Before running any of the commands below, make sure your virtual environment is active (`.\venv\Scripts\activate`) and you are running these commands from the **parent directory** (`D:\TATA\data 1`) so that Python recognizes `think_fast` as a module.
 
-Train the 5-channel YOLOv11 model with weight transfer from a standard `yolo11n.pt` checkpoint:
-
-```bash
-python -m think_fast.model.train \
-    --dataroot /data/nuscenes \
-    --pretrained yolo11n.pt \
-    --epochs 100 \
-    --batch 4
+```powershell
+cd "D:\TATA\data 1"
 ```
 
-### 2. ONNX Export
+### 1. Run the Unit Tests
+Make sure everything is wired up correctly:
+```powershell
+pytest think_fast/tests/
+```
 
+### 2. Training
+Train the 5-channel YOLOv11 model with weight transfer from a standard `yolo11n.pt` checkpoint. 
+*(Adjust the `--dataroot` path to match your exact nuScenes extraction folder).*
+```powershell
+python -m think_fast.model.train --dataroot "D:\TATA\data 1\v1.0-trainval03_blobs" --pretrained yolo11n.pt --epochs 100 --batch 4
+```
+
+### 3. ONNX Export
 Export the trained model to ONNX with dynamic batch sizing:
-
-```bash
-python -m think_fast.inference.export_onnx \
-    --weights runs/think_fast/best.pt \
-    --output model_5ch.onnx
+```powershell
+python -m think_fast.inference.export_onnx --weights runs/think_fast/best.pt --output model_5ch.onnx
 ```
 
-### 3. TensorRT Build (Production Only)
-
+### 4. TensorRT Build (Production Only)
 Compile an FP16 engine tailored to your GPU architecture:
-
 ```python
 from think_fast.inference.tensorrt_engine import TRTEngineBuilder
 TRTEngineBuilder.build_from_onnx("model_5ch.onnx", "model_5ch_fp16.trt", fp16=True)
 ```
 
-### 4. Running the End-to-End Pipeline
+### 5. Running the End-to-End Pipeline
 
 Run the orchestrator on a set of nuScenes samples. You can use `--mode dev` (PyTorch) or `--mode prod` (TensorRT).
 
-```bash
-# Start the MCP Stub Server (VLA simulator) in a separate terminal:
+**Step A:** Start the MCP Stub Server (VLA simulator) in a separate PowerShell window (remember to activate your venv there too):
+```powershell
+cd "D:\TATA\data 1"
+.\think_fast\venv\Scripts\activate
 python -m think_fast.mcp.mcp_server_stub
+```
 
-# Run the pipeline (Development mode)
-python -m think_fast.pipeline.think_fast_pipeline \
-    --dataroot /data/nuscenes \
-    --weights runs/think_fast/best.pt \
-    --mode dev \
-    --demo \
-    --n_samples 5
+**Step B:** Run the pipeline in your original window:
+```powershell
+python -m think_fast.pipeline.think_fast_pipeline --dataroot "D:\TATA\data 1\v1.0-trainval03_blobs" --weights runs/think_fast/best.pt --mode dev --demo --n_samples 5
 ```
 
 ## C++ Integration
 
 The `threat/` and `actuation/` directories contain header-only and standalone C++ implementations designed to be compiled natively into ROS2 nodes or embedded controllers.
 
-Compile the threat matrix standalone demo:
-```bash
-g++ -std=c++17 -O2 -o threat_demo think_fast/threat/threat_matrix.cpp -DTHINK_FAST_STANDALONE_DEMO
-./threat_demo
+Compile the threat matrix standalone demo (requires MinGW/GCC):
+```powershell
+cd think_fast
+g++ -std=c++17 -O2 -o threat_demo.exe threat/threat_matrix.cpp -DTHINK_FAST_STANDALONE_DEMO
+.\threat_demo.exe
 ```
