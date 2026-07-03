@@ -510,6 +510,9 @@ class ThinkFastTrainer:
             total_loss += loss.item()
             n_batches  += 1
 
+            if n_batches % 10 == 0:
+                logger.info("Epoch %d | Batch %4d | Loss: %.4f", epoch, n_batches, loss.item())
+
         return total_loss / max(n_batches, 1)
 
     def _val_epoch(self, epoch: int) -> float:
@@ -549,8 +552,10 @@ class ThinkFastTrainer:
                 if isinstance(batch_dict, dict):
                     loss_result = self.model.model.loss(batch_dict)
                     loss = loss_result[0] if isinstance(loss_result, tuple) else loss_result
+                    if loss.numel() > 1:
+                        loss = loss.sum()
                 else:
-                    loss = 0.0
+                    loss = torch.tensor(0.0)
 
                 total_loss += loss.item()
                 n_batches  += 1
