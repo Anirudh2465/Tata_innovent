@@ -2,7 +2,7 @@
 name = "think_fast"
 version = "0.1.0"
 description = "Think Fast: Reflex Architecture for autonomous vehicles."
-requires-python = ">=3.10"
+requires-python = "==3.10.*"
 dependencies = [
     "fastapi",
     "httpx",
