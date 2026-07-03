@@ -202,8 +202,7 @@ def build_model_with_weight_transfer(
     except ImportError:
         raise ImportError("Install ultralytics: pip install ultralytics")
 
-    if not os.path.exists(pretrained_pt):
-        raise FileNotFoundError(f"Pre-trained weights not found: {pretrained_pt}")
+    # Ultralytics will auto-download the weights if they don't exist locally.
 
     # ── Step 1: Build fresh 5-channel model ──────────────────────
     logger.info("Initialising 5-channel model from YAML …")
